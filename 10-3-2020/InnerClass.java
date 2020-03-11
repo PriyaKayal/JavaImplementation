@@ -2,7 +2,7 @@ package com.oops;
 /**
  * 
  * @author Gnanapriya
- * Inner Class demonstration
+ * InnerClass demonstration
  */
 class O_Class 
 { 
