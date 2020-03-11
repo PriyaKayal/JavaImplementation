@@ -2,7 +2,7 @@ package com.oops;
 
 /**
  * @author Gnanapriya
- *
+ *Abstract Interface Implementation
  */
 interface i {
 	void display();
