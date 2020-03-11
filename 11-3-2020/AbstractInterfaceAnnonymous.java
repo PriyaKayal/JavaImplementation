@@ -2,7 +2,7 @@ package com.oops;
 
 /**
  * @author Gnanapriya
- *Abstract Interface Implementation
+ *Abstract Interface AnnonymousClass Implementation
  */
 interface i {
 	void display();
