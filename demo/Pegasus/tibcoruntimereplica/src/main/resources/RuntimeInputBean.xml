@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
+	<util:map id="convertZulToLocInput"
+		key-type="java.lang.String"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement"
+		map-class="java.util.HashMap">
+		<entry key="locCd" value-ref="emptyElement" />
+		<entry key="zulTimestamp" value-ref="emptyElement" />
+	</util:map>
+	<bean id="convertZulToLocStart"
+		class="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement">
+		<property name="name" value="root" />
+		<property name="value" ref="convertZulToLocInput" />
+	</bean>
+	<bean id="leftOperand1"
+		class="com.recreate.tibco.runtime.demo.model.configuration.SimpleExpression">
+		<property name="value">
+			<bean class="java.lang.Integer">
+				<constructor-arg value="5" />
+			</bean>
+		</property>
+	</bean>
+	<bean id="leftOperand2"
+		class="com.recreate.tibco.runtime.demo.model.configuration.SimpleExpression">
+		<property name="value">
+			<bean class="java.lang.Integer">
+				<constructor-arg value="2" />
+			</bean>
+		</property>
+	</bean>
+	<bean id="leftOperand"
+		class="com.recreate.tibco.runtime.demo.model.configuration.BinaryExpression">
+		<property name="leftOperand" ref="leftOperand1" />
+		<property name="rightOperand" ref="leftOperand2" />
+		<property name="operator" value="plus" />
+	</bean>
+	<bean id="rightOperand"
+		class="com.recreate.tibco.runtime.demo.model.configuration.SimpleExpression">
+		<property name="value">
+			<bean class="java.lang.Integer">
+				<constructor-arg value="9" />
+			</bean>
+		</property>
+	</bean>
+	<bean id="condition1"
+		class="com.recreate.tibco.runtime.demo.model.configuration.BinaryExpression">
+		<property name="leftOperand" ref="leftOperand" />
+		<property name="rightOperand" ref="rightOperand" />
+		<property name="operator" value="greaterthan" />
+	</bean>
+	<util:list id="convertZulToLocProcVars" />
+	<util:list id="convertZulToLocReturnTypes" />
+	<util:list id="convertZulToLocTransitions"
+		list-class="java.util.ArrayList"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.Transition">
+		<bean id="transition1"
+			class="com.recreate.tibco.runtime.demo.model.configuration.Transition">
+			<property name="fromActivity" value="Start" />
+			<property name="toActivity" value="GetLocalAdjustments" />
+		</bean>
+		<bean id="transition1"
+			class="com.recreate.tibco.runtime.demo.model.configuration.Transition">
+			<property name="fromActivity" value="GetLocalAdjustments" />
+			<property name="toActivity" value="UpdateActivityLog" />
+			<property name="condition" ref="condition1" />
+		</bean>
+		<bean id="transition1"
+			class="com.recreate.tibco.runtime.demo.model.configuration.Transition">
+			<property name="fromActivity" value="GetLocalAdjustments" />
+			<property name="toActivity" value="Log-1" />
+		</bean>
+		<bean id="transition2"
+			class="com.recreate.tibco.runtime.demo.model.configuration.Transition">
+			<property name="fromActivity" value="UpdateActivityLog" />
+			<property name="toActivity" value="End" />
+		</bean>
+		<bean id="transition1"
+			class="com.recreate.tibco.runtime.demo.model.configuration.Transition">
+			<property name="fromActivity" value="Log-1" />
+			<property name="toActivity" value="End" />
+		</bean>
+		
+	</util:list>
+	<util:map id="convertZulToLocActivities"	key-type="java.lang.String"	value-type="com.recreate.tibco.runtime.demo.model.interfaces.Activity"	map-class="java.util.HashMap">
+		<entry key="GetLocalAdjustments" value-ref="getLocalAdjustmentsActivity" />
+		<entry key="Log-1" value-ref="getLogActivity" />
+		<entry key="UpdateActivityLog" value-ref="getLocalAdjustmentUpdateActivity" />
+	</util:map>
+	<bean id="getLocalAdjustmentsActivity"
+		class="com.recreate.tibco.runtime.demo.model.configuration.JDBCSelectActivityConfig">
+		<property name="config"
+			ref="getLocalAdjustmentsActivityConfig" />
+	</bean>
+	<bean id="getLogActivity"
+		class="com.recreate.tibco.runtime.demo.model.configuration.LogActivityConfig">
+		<property name="config"
+			ref="getLogActivityConfig" />
+	</bean>
+	
+	<bean id="getLocalAdjustmentUpdateActivity"
+		class="com.recreate.tibco.runtime.demo.model.configuration.JDBCUpdateActivityConfig">
+		<property name="config"
+			ref="getLocalAdjustmentsUpdateActivityConfig" />
+	</bean>
+
+	<bean id="getLocalAdjustmentsActivityConfig"
+		class="com.recreate.tibco.runtime.demo.model.configuration.JDBCActivityConfig">
+		<property name="commit" value="false" />
+		<property name="dataSourceLink"
+			value="JdbcConnectionForTestVA" />
+		<property name="maxRows" value="100" />
+		<property name="timeout" value="10" />
+		<property name="statement"
+			value="select ((zuluAdMinQty + isnull((select distinct adjmtMin from Facility f
+	join Dst d
+	on d.dstZone = f.dstZone
+		and d.countryCd = f.countryCd
+		where locCd=? and convert(DATETIME, ?) between dstBegDtTmZ and dstEndDtTmZ), 0)
+)) as adjustment  from Facility where locCd=?" />
+		<property name="preparedParams"
+			ref="getLocalAdjustmentsParams" />
+		<property name="outputClass" ref="convertZulToLocReturn" />
+	</bean>
+
+<bean id="getLogActivityConfig"
+		class="com.recreate.tibco.runtime.demo.model.configuration.LogActivityConfig">
+	</bean>
+	
+	<bean id="getLocalAdjustmentsUpdateActivityConfig"
+		class="com.recreate.tibco.runtime.demo.model.configuration.JDBCActivityConfig">
+		<property name="commit" value="false" />
+		<property name="dataSourceLink"
+			value="JdbcConnectionForTestVA" />
+		<property name="maxRows" value="100" />
+		<property name="timeout" value="10" />
+		<property name="statement"
+			value="insert into va_actuals_summary (cycle_qty, segment_cd, flt_hr_qty, blk_hr_qty, ac_grp_cd, cal_zul_dt, fscl_yr_nbr)
+values (?, ?, ?, ?, ?, ?, ?)" />
+		<property name="preparedParams"
+			ref="getLocalAdjustmentsUpdateParams" />
+	</bean>
+
+
+	<util:list id="getLocalAdjustmentsParams">
+		<value>locCdDst</value>
+		<value>zulTime</value>
+		<value>locFacDst</value>
+	</util:list>
+
+	<util:list id="getLocalAdjustmentsUpdateParams">
+		<value>cycle_qty</value>
+		<value>segment_cd</value>
+		<value>flt_hr_qty</value>
+		<value>blk_hr_qty</value>
+		<value>ac_grp_cd</value>
+		<value>cal_zul_dt</value>
+		<value>fscl_yr_nbr</value>
+
+	</util:list>
+
+
+	<util:map id="convertZulToLocOutput"
+		key-type="java.lang.String"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement"
+		map-class="java.util.HashMap">
+		<entry key="adjustment" value-ref="emptyElement" />
+	</util:map>
+	<bean id="convertZulToLocReturn"
+		class="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement">
+		<property name="name" value="convertZulToLocReturn" />
+		<property name="value" ref="convertZulToLocOutput" />
+	</bean>
+	<bean id="nextTimeToRunElement"
+		class="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement">
+		<constructor-arg>
+			<value>java.lang.Integer</value>
+		</constructor-arg>
+	</bean>
+	<bean id="isRunningElement"
+		class="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement">
+		<constructor-arg>
+			<value>java.lang.Boolean</value>
+		</constructor-arg>
+	</bean>
+	<util:map id="actualChangesRunningModel"
+		key-type="java.lang.String"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement"
+		map-class="java.util.HashMap">
+		<entry key="nextTimeToRun" value-ref="nextTimeToRunElement" />
+		<entry key="isRunning" value-ref="isRunningElement" />
+	</util:map>
+	<bean id="actualChangesRunningVariable"
+		class="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement">
+		<property name="name" value="root" />
+		<property name="value" ref="actualChangesRunningModel" />
+	</bean>
+	<util:map id="actualChangesRunningInitialValue"
+		map-class="java.util.HashMap">
+		<entry key="nextTimeToRun" value="0" />
+		<entry key="isRunning" value="false" />
+	</util:map>
+	<bean id="emptyElement"
+		class="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement"
+		scope="prototype">
+		<constructor-arg>
+			<value>java.lang.String</value>
+		</constructor-arg>
+	</bean>
+	<util:map id="activeScheduleModel" key-type="java.lang.String"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.SimpleElement"
+		map-class="java.util.HashMap">
+		<entry key="SchedId" value-ref="emptyElement" />
+		<entry key="CaseId" value-ref="emptyElement" />
+		<entry key="SchedName" value-ref="emptyElement" />
+		<entry key="CaseName" value-ref="emptyElement" />
+		<entry key="CaseType" value-ref="emptyElement" />
+		<entry key="CaseDesc" value-ref="emptyElement" />
+		<entry key="PlanPeriodDayQty" value-ref="emptyElement" />
+		<entry key="PlanPeriod" value-ref="emptyElement" />
+		<entry key="PlanPeriodStartDtTm" value-ref="emptyElement" />
+		<entry key="PlanPeriodEndDtTm" value-ref="emptyElement" />
+		<entry key="DatabaseName" value-ref="emptyElement" />
+		<entry key="DbServerName" value-ref="emptyElement" />
+		<entry key="DbHostName" value-ref="emptyElement" />
+	</util:map>
+	<bean id="activeScheduleSchemaScheduleElement"
+		class="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement">
+		<property name="name" value="ScheduleType" />
+		<property name="value" ref="activeScheduleModel" />
+	</bean>
+	<util:map id="activeScheduleSchemaModelElement"
+		key-type="java.lang.String"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement"
+		map-class="java.util.HashMap">
+		<entry key="Schedule"
+			value-ref="activeScheduleSchemaScheduleElement" />
+	</util:map>
+	<bean id="activeScheduleSchemaBodyElement"
+		class="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement">
+		<property name="name" value="Schedule" />
+		<property name="value" ref="activeScheduleSchemaModelElement" />
+	</bean>
+	<util:map id="activeScheduleSchemaBody"
+		key-type="java.lang.String"
+		value-type="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement"
+		map-class="java.util.HashMap">
+		<entry key="Body" value-ref="activeScheduleSchemaBodyElement" />
+	</util:map>
+	<bean id="activeScheduleSchemaModel"
+		class="com.recreate.tibco.runtime.demo.model.configuration.ComplexElement">
+		<property name="name" value="Body" />
+		<property name="value" ref="activeScheduleSchemaBody" />
+	</bean>
+	<bean id="runtimeInput"
+		class="com.recreate.tibco.runtime.demo.model.configuration.TibcoRuntimeInput">
+		<property name="defaultVariableConfigs">
+			<list>
+				<bean id="environmentVariables_Database_TestVA_jdbcUrl"
+					class="com.recreate.tibco.runtime.demo.model.configuration.DefaultVariableConfig">
+					<property name="accessor"
+						value="%%EnvironmentVariables/Database/TestVA/jdbcUrl%%" />
+					<property name="name" value="jdbcUrl" />
+					<property name="value"
+						value="jdbc:oracle:thin:@ldap://oid.inf.fedex.com:3060/PEGPRACTICE_SVC1_L2,cn=OracleContext" />
+					<property name="type" value="String" />
+					<property name="deploymentSettable" value="true" />
+					<property name="serviceSettable" value="false" />
+					<property name="modTime" value="1389628602930" />
+				</bean>
+				<bean id="environmentVariables_Database_TestVA_jdbcDriver"
+					class="com.recreate.tibco.runtime.demo.model.configuration.DefaultVariableConfig">
+					<property name="accessor"
+						value="%%EnvironmentVariables/Database/TestVA/jdbcDriver%%" />
+					<property name="name" value="jdbcDriver" />
+					<property name="value"
+						value="oracle.jdbc.driver.OracleDriver" />
+					<property name="type" value="String" />
+					<property name="deploymentSettable" value="true" />
+					<property name="serviceSettable" value="false" />
+					<property name="modTime" value="1389628602930" />
+				</bean>
+				<bean id="environmentVariables_Database_TestVA_username"
+					class="com.recreate.tibco.runtime.demo.model.configuration.DefaultVariableConfig">
+					<property name="accessor"
+						value="%%EnvironmentVariables/Database/TestVA/user%%" />
+					<property name="name" value="user" />
+					<property name="value" value="peg_practice_schema" />
+					<property name="type" value="String" />
+					<property name="deploymentSettable" value="true" />
+					<property name="serviceSettable" value="false" />
+					<property name="modTime" value="1389628602930" />
+				</bean>
+				<bean id="environmentVariables_Database_TestVA_pw"
+					class="com.recreate.tibco.runtime.demo.model.configuration.DefaultVariableConfig">
+					<property name="accessor"
+						value="%%EnvironmentVariables/Database/TestVA/pw%%" />
+					<property name="name" value="pw" />
+					<property name="value" value="pegaschema" />
+					<property name="type" value="String" />
+					<property name="deploymentSettable" value="true" />
+					<property name="serviceSettable" value="false" />
+					<property name="modTime" value="1389628602930" />
+				</bean>
+			</list>
+		</property>
+		<property name="resources">
+			<list>
+				<bean id="testVAJDBCSharedResource"
+					class="com.recreate.tibco.runtime.demo.model.configuration.JDBCResourceConfig">
+					<property name="name" value="JdbcConnectionForTestVA" />
+					<property name="location"
+						value="%%EnvironmentVariables/Database/TestVA/jdbcUrl%%" />
+					<property name="driver"
+						value="%%EnvironmentVariables/Database/TestVA/jdbcDriver%%" />
+					<property name="user"
+						value="%%EnvironmentVariables/Database/TestVA/user%%" />
+					<property name="password"
+						value="%%EnvironmentVariables/Database/TestVA/pw%%" />
+					<property name="connectionType" value="JDBC" />
+					<property name="maxConnections" value="10" />
+					<property name="loginTimeout" value="0" />
+					<property name="useSharedJndiConfig" value="false" />
+				</bean>
+				<bean id="actualChangesRunning"
+					class="com.recreate.tibco.runtime.demo.model.configuration.SharedVariableConfig">
+					<property name="name" value="ActualChangesRunning" />
+					<property name="persistent" value="false" />
+					<property name="multiEngine" value="false" />
+					<property name="initialValues"
+						ref="actualChangesRunningInitialValue" />
+					<property name="sharedElement"
+						ref="actualChangesRunningVariable" />
+				</bean>
+				<bean id="activeScheduleSchema"
+					class="com.recreate.tibco.runtime.demo.model.configuration.SchemaResourcesConfig">
+					<property name="name" value="ActiveScheduleSchema" />
+					<property name="config" ref="activeScheduleSchemaModel" />
+				</bean>
+			</list>
+		</property>
+		<property name="processes">
+			<list
+				value-type="com.recreate.tibco.runtime.demo.model.configuration.ProcessConfig">
+				<bean id="convertZulToLocProcess"
+					class="com.recreate.tibco.runtime.demo.model.configuration.ProcessConfig">
+					<property name="name" value="ConvertZulToLoc" />
+					<property name="start" ref="convertZulToLocStart" />
+					<property name="processVariables"
+						ref="convertZulToLocProcVars" />
+					<property name="activities"
+						ref="convertZulToLocActivities" />
+					<property name="returnType" ref="emptyElement" />
+					<property name="transitions"
+						ref="convertZulToLocTransitions" />
+				</bean>
+			</list>
+		</property>
+	</bean>
+</beans>
